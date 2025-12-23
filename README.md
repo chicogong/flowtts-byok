@@ -1,2 +1,188 @@
-# flowtts-byok-replicate
-FlowTTS + BYOK + Replicate
+# FlowTTS BYOK Replicate
+
+基于腾讯云 FlowTTS 的 Replicate 封装，支持 BYOK（Bring Your Own Key）模式。
+
+## 概述
+
+这是一个部署在 [Replicate](https://replicate.com) 上的 TTS（文字转语音）模型封装。
+
+**重要说明：**
+- 本模型**不提供任何 API 密钥**
+- 用户必须**自带腾讯云凭证**（BYOK）
+- 这是一个 wrapper，实际语音合成由腾讯云 FlowTTS 完成
+- 输入的 SSE 流式 PCM 音频会被拼接并转换为 WAV 文件返回
+
+## 前置条件
+
+使用前，你需要准备：
+
+1. **腾讯云账号** - [注册地址](https://cloud.tencent.com/)
+2. **开通 TRTC 服务** - [控制台](https://console.cloud.tencent.com/trtc)
+3. **获取凭证：**
+   - `SecretId` - API 密钥 ID
+   - `SecretKey` - API 密钥
+   - `SdkAppId` - TRTC 应用 ID
+
+## 使用方法
+
+### 方式一：Replicate Web Playground
+
+访问模型页面，在表单中填写：
+- `text`: 要合成的文本
+- `secret_id`: 你的腾讯云 SecretId
+- `secret_key`: 你的腾讯云 SecretKey
+- `sdk_app_id`: 你的 TRTC SdkAppId
+
+### 方式二：cURL 调用
+
+```bash
+curl -s -X POST "https://api.replicate.com/v1/predictions" \
+  -H "Authorization: Bearer $REPLICATE_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Prefer: wait" \
+  -d '{
+    "version": "<MODEL_VERSION>",
+    "input": {
+      "text": "你好，欢迎使用语音合成服务。",
+      "secret_id": "YOUR_TENCENT_SECRET_ID",
+      "secret_key": "YOUR_TENCENT_SECRET_KEY",
+      "sdk_app_id": 1400000000,
+      "voice_id": "v-female-R2s4N9qJ",
+      "language": "zh"
+    }
+  }'
+```
+
+### 方式三：Python SDK
+
+```python
+import replicate
+
+output = replicate.run(
+    "<USERNAME>/flowtts-byok-replicate:<VERSION>",
+    input={
+        "text": "你好，欢迎使用语音合成服务。",
+        "secret_id": "YOUR_TENCENT_SECRET_ID",
+        "secret_key": "YOUR_TENCENT_SECRET_KEY",
+        "sdk_app_id": 1400000000,
+        "voice_id": "v-female-R2s4N9qJ",
+        "language": "zh",
+        "speed": 1.0,
+        "volume": 1.0,
+    }
+)
+
+# output 是生成的 WAV 文件 URL
+print(output)
+```
+
+### 方式四：异步调用 + Webhook（推荐长文本）
+
+```python
+import replicate
+
+# 创建异步预测
+prediction = replicate.predictions.create(
+    version="<MODEL_VERSION>",
+    input={
+        "text": "这是一段很长的文本...",
+        "secret_id": "YOUR_TENCENT_SECRET_ID",
+        "secret_key": "YOUR_TENCENT_SECRET_KEY",
+        "sdk_app_id": 1400000000,
+    },
+    webhook="https://your-server.com/webhook",
+    webhook_events_filter=["completed"]
+)
+
+print(f"Prediction ID: {prediction.id}")
+# Replicate 会在完成后 POST 到你的 webhook
+```
+
+## 输入参数
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `text` | string | 是 | - | 要合成的文本（最多 2000 字符） |
+| `secret_id` | Secret | 是 | - | 腾讯云 SecretId |
+| `secret_key` | Secret | 是 | - | 腾讯云 SecretKey |
+| `sdk_app_id` | int | 是 | - | TRTC SdkAppId |
+| `voice_id` | string | 否 | `v-female-R2s4N9qJ` | 音色 ID |
+| `speed` | float | 否 | `1.0` | 语速 [0.5, 2.0] |
+| `volume` | float | 否 | `1.0` | 音量 [0, 10] |
+| `pitch` | int | 否 | `0` | 音调 [-12, 12] 半音 |
+| `language` | string | 否 | `zh` | 语言：zh/en/yue/ja/ko/auto |
+| `sample_rate` | int | 否 | `24000` | 采样率：16000 或 24000 Hz |
+| `timeout` | int | 否 | `120` | 超时时间 [10, 300] 秒 |
+
+## 输出
+
+返回 WAV 格式的音频文件 URL。
+
+## 可用音色
+
+| VoiceId | 描述 |
+|---------|------|
+| `v-female-R2s4N9qJ` | 女声（默认） |
+
+> 更多音色请参考 [腾讯云 FlowTTS 文档](https://cloud.tencent.com/document/product/647)
+
+## 示例输出
+
+[examples/sample_output.wav](examples/sample_output.wav) - 本地测试生成的示例音频
+
+- 输入文本：`你好，这是一个测试。`
+- 格式：WAV (PCM 16-bit, mono, 24000 Hz)
+- 时长：1.84 秒
+
+## 本地开发与测试
+
+### 安装 Cog
+
+```bash
+# macOS
+brew install cog
+
+# Linux
+sudo curl -o /usr/local/bin/cog -L \
+  "https://github.com/replicate/cog/releases/latest/download/cog_$(uname -s)_$(uname -m)"
+sudo chmod +x /usr/local/bin/cog
+```
+
+### 本地测试
+
+```bash
+cog predict \
+  -i text="你好，世界" \
+  -i secret_id="YOUR_SECRET_ID" \
+  -i secret_key="YOUR_SECRET_KEY" \
+  -i sdk_app_id=1400000000
+```
+
+### 推送到 Replicate
+
+```bash
+# 登录
+cog login
+
+# 推送（替换为你的用户名）
+cog push r8.im/<YOUR_USERNAME>/flowtts-byok-replicate
+```
+
+## 安全说明
+
+- `secret_id` 和 `secret_key` 使用 Cog 的 `Secret` 类型，在 Replicate 系统中会被自动脱敏
+- 凭证只在容器内使用，不会被记录或返回
+- 建议在腾讯云控制台为 API 密钥设置适当的权限和配额限制
+
+## 错误处理
+
+| 错误信息 | 可能原因 |
+|----------|----------|
+| `Authentication failed` | SecretId/SecretKey/SdkAppId 不正确 |
+| `Rate limit exceeded` | 超出腾讯云 API 调用限制 |
+| `Text too long` | 文本超过 2000 字符限制 |
+| `No audio data received` | 上游 API 未返回音频数据 |
+
+## 许可证
+
+MIT License

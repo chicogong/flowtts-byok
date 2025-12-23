@@ -1,0 +1,9 @@
+# Cog configuration for FlowTTS BYOK Replicate wrapper
+# https://github.com/replicate/cog/blob/main/docs/yaml.md
+
+build:
+  python_version: "3.12"
+  python_packages:
+    - "tencentcloud-sdk-python>=3.0.1200"
+
+predict: "predict.py:Predictor"
