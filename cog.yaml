@@ -3,7 +3,6 @@
 
 build:
   python_version: "3.12"
-  python_packages:
-    - "tencentcloud-sdk-python>=3.0.1200"
+  python_requirements: "requirements.txt"
 
 predict: "predict.py:Predictor"

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pyright: reportMissingImports=false
 """
 FlowTTS Gradio Demo
 腾讯云 FlowTTS 语音合成演示 - BYOK (Bring Your Own Key)
