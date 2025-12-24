@@ -17,6 +17,7 @@
 | **Hugging Face** | https://huggingface.co/spaces/gonghaoran/flow-tts | 免费 Gradio 演示 |
 | **Streamlit** | https://flowtts.streamlit.app/ | Streamlit 演示 |
 | **Google Colab** | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/chicogong/flowtts-byok/blob/master/colab/FlowTTS_Demo.ipynb) | 交互式 Notebook |
+| **Replit** | [Run on Replit](https://replit.com/github/chicogong/flowtts-byok) | 在线 IDE + 部署 |
 
 ## 项目结构
 
@@ -31,6 +32,11 @@ flowtts-byok/
 │   ├── requirements.txt
 │   └── README.md
 ├── streamlit/          # Streamlit 版本（可自行部署）
+│   ├── app.py
+│   └── requirements.txt
+├── replit/             # Replit 版本
+│   ├── .replit
+│   ├── replit.nix
 │   ├── app.py
 │   └── requirements.txt
 ├── colab/              # Google Colab Notebook
